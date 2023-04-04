@@ -12,55 +12,61 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 
+def serialize(x, y):
+    x_shape = x.shape
+    x_bytes = x.tobytes()
+    y_bytes = y.tobytes()
+    return tf.train.Example(features=tf.train.Features(feature={
+        'x_shape': tf.train.Feature(int64_list=tf.train.Int64List(value=x_shape)),
+        'x': tf.train.Feature(bytes_list=tf.train.BytesList(value=[x_bytes])),
+        'y': tf.train.Feature(bytes_list=tf.train.BytesList(value=[y_bytes]))
+    }))
 
-def read(filepath):
-    """Read and load volume"""
-    # Read file
-    scan = nib.load(filepath)
-    # Get raw data
-    scan = scan.get_fdata()
-    return scan
-
-
-def normalize(volume):
-    """Normalize the volume"""
-    min = -1000
-    max = 400
-    volume[volume < min] = min
-    volume[volume > max] = max
-    volume = (volume - min) / (max - min)
-    volume = volume.astype("float32")
-    return volume
-
-
-def resize(img, desired_height,  desired_width, desired_depth):
-    """Resize across z-axis"""
-    # Get current depth
-    current_depth = img.shape[-1]
-    current_width = img.shape[0]
-    current_height = img.shape[1]
-    # Compute depth factor
-    depth = current_depth / desired_depth
-    width = current_width / desired_width
-    height = current_height / desired_height
-    depth_factor = 1 / depth
-    width_factor = 1 / width
-    height_factor = 1 / height
-    # Rotate
-    img = ndimage.rotate(img, 90, reshape=False)
-    # Resize across z-axis
-    img = ndimage.zoom(img, (width_factor, height_factor, depth_factor), order=1)
-    return img
 
 
 def process_img(path, desired_height = 128,  desired_width = 128, desired_depth = 64):
+    def read(filepath):
+        """Read and load volume"""
+        # Read file
+        scan = nib.load(filepath)
+        # Get raw data
+        scan = scan.get_fdata()
+        return scan
+    
+    def normalize(volume):
+        """Normalize the volume"""
+        min = -1000
+        max = 400
+        volume[volume < min] = min
+        volume[volume > max] = max
+        volume = (volume - min) / (max - min)
+        volume = volume.astype("float32")
+        return volume
+    
+    def resize(img, desired_height,  desired_width, desired_depth):
+        """Resize across z-axis"""
+        # Get current depth
+        current_depth = img.shape[-1]
+        current_width = img.shape[0]
+        current_height = img.shape[1]
+        # Compute depth factor
+        depth = current_depth / desired_depth
+        width = current_width / desired_width
+        height = current_height / desired_height
+        depth_factor = 1 / depth
+        width_factor = 1 / width
+        height_factor = 1 / height
+        # Rotate
+        img = ndimage.rotate(img, 90, reshape=False)
+        # Resize across z-axis
+        img = ndimage.zoom(img, (width_factor, height_factor, depth_factor), order=1)
+        return img
+
+
     volume = read(path)
     volume = normalize(volume)
     volume = resize(volume, desired_height=desired_height, desired_width=desired_width, desired_depth=desired_depth)
     return volume 
-
-
-
 
 
 
@@ -88,6 +94,7 @@ for label in os.listdir(data_folder):
     break
 
 x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.3)
+
 with tf.device("CPU"):
     train_loader = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     validation_loader = tf.data.Dataset.from_tensor_slices((x_test, y_test))
