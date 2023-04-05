@@ -90,101 +90,21 @@ for label in os.listdir(data_folder):
         X[i] = process_img(img_directory + '/' + img, resize_h, resize_w, resize_d)
         Y[i] = label
         i += 1
-        break
-    break
 
 x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.3)
 
-with tf.device("CPU"):
-    train_loader = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-    validation_loader = tf.data.Dataset.from_tensor_slices((x_test, y_test))
+
+def write_to_record(x_data, y_data, filename):
+    with tf.io.TFRecordWriter(f'{filename}') as writer:
+        for i in range(len(y_data)):
+            entry = serialize(x_data[i], y_data[i])
+            writer.write(entry.SerializeToString())
+
+
+write_to_record(x_train, y_train, 'training_dataset.tfrecord')
+write_to_record(x_test, y_test, 'testing_dataset.tfrecord')
 
 
 
 
-
-
-
-
-
-
-
-
-
-# @tf.function
-# def rotate(volume):
-#     """Rotate the volume by a few degrees"""
-
-#     def scipy_rotate(volume):
-#         # define some rotation angles
-#         angles = [-20, -10, -5, 5, 10, 20]
-#         # pick angles at random
-#         angle = random.choice(angles)
-#         # rotate volume
-#         volume = ndimage.rotate(volume, angle, reshape=False)
-#         volume[volume < 0] = 0
-#         volume[volume > 1] = 1
-#         return volume
-
-#     augmented_volume = tf.numpy_function(scipy_rotate, [volume], tf.float32)
-#     return augmented_volume
-
-# def train_preprocessing(volume, label):
-#     """Process training data by rotating and adding a channel."""
-#     # Rotate volume
-#     volume = rotate(volume)
-#     volume = tf.expand_dims(volume, axis=3)
-#     return volume, label
-
-# def validation_preprocessing(volume, label):
-#     """Process validation data by only adding a channel."""
-#     volume = tf.expand_dims(volume, axis=3)
-#     return volume, label
-
-
-
-
-# train_dataset = (
-#     train_loader.shuffle(len(x_train))
-#     .map(train_preprocessing)
-#     .batch(batch_size)
-#     .prefetch(2)
-# )
-# # Only rescale.
-# validation_dataset = (
-#     validation_loader.shuffle(len(x_test))
-#     .map(validation_preprocessing)
-#     .batch(batch_size)
-#     .prefetch(2)
-# )
-
-
-
-
-
-
-# initial_learning_rate = 0.0001
-# lr_schedule = keras.optimizers.schedules.ExponentialDecay(
-#     initial_learning_rate, decay_steps=100000, decay_rate=0.96, staircase=True
-# )
-# model.compile(
-#     loss="SparseCategoricalCrossentropy ",
-#     optimizer=keras.optimizers.Adam(learning_rate=lr_schedule),
-#     metrics=["acc"],
-# )
-
-# checkpoint_cb = keras.callbacks.ModelCheckpoint(
-#     "3d_image_classification.h5", save_best_only=True
-# )
-# early_stopping_cb = keras.callbacks.EarlyStopping(monitor="val_acc", patience=15)
-
-# epochs = 100
-# model.fit(
-#     train_dataset,
-#     validation_data=validation_dataset,
-#     epochs=epochs,
-#     shuffle=True,
-#     verbose=2,
-#     callbacks=[checkpoint_cb, early_stopping_cb],
-# )
 
