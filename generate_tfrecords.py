@@ -13,9 +13,9 @@ from tensorflow.keras import layers
 
 
 def serialize(x, y):
-    x_shape = x.shape
     x_bytes = x.tobytes()
-    y_bytes = y.tobytes()
+    x_shape = x.shape
+    y_bytes = tf.io.serialize_tensor(y).numpy()
     return tf.train.Example(features=tf.train.Features(feature={
         'x_shape': tf.train.Feature(int64_list=tf.train.Int64List(value=x_shape)),
         'x': tf.train.Feature(bytes_list=tf.train.BytesList(value=[x_bytes])),
@@ -81,22 +81,30 @@ for label in os.listdir(data_folder):
     length += len(os.listdir(f'{data_folder}/{label}/'))
 
 X = np.empty(shape=(length,resize_h, resize_w, resize_d))
-Y = np.empty(shape=(length))
+Y = np.empty(shape=(length), dtype=np.float64)
 
-i = 0
+j = 0
+print('Loading Images')
 for label in os.listdir(data_folder):
     img_directory = f'{data_folder}/{label}/'
     for img in os.listdir(img_directory):
-        X[i] = process_img(img_directory + '/' + img, resize_h, resize_w, resize_d)
-        Y[i] = label
-        i += 1
+        if j % 100 == 0:
+            print('Loading Image #', j)
+        X[j] = process_img(img_directory + '/' + img, resize_h, resize_w, resize_d)
+        Y[j] = int(label)
+        j += 1
+    
 
 x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.3)
 
 
 def write_to_record(x_data, y_data, filename):
+    print(f'Generating {filename}')
+    y_data = tf.one_hot(y_data, depth=4, axis=1)
     with tf.io.TFRecordWriter(f'{filename}') as writer:
         for i in range(len(y_data)):
+            if i % 100 == 0:
+                print(f'{i} / {len(y_data)}')
             entry = serialize(x_data[i], y_data[i])
             writer.write(entry.SerializeToString())
 
