@@ -13,8 +13,13 @@ from tensorflow.keras import layers
 
 
 def serialize(x, y):
-    x_bytes = x.tobytes()
     x_shape = x.shape
+    
+    x = tf.reshape(x, x_shape)
+    x = tf.expand_dims(x, axis=-1)
+    x = tf.repeat(x, 3, axis=-1)
+
+    x_bytes = x.tobytes()
     y_bytes = tf.io.serialize_tensor(y).numpy()
     return tf.train.Example(features=tf.train.Features(feature={
         'x_shape': tf.train.Feature(int64_list=tf.train.Int64List(value=x_shape)),
@@ -110,6 +115,7 @@ def write_to_record(x_data, y_data, filename):
 
 
 write_to_record(x_train, y_train, 'training_dataset.tfrecord')
+print('done')
 write_to_record(x_test, y_test, 'testing_dataset.tfrecord')
 
 
