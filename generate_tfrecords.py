@@ -13,13 +13,11 @@ from tensorflow.keras import layers
 
 
 def serialize(x, y):
-    x_shape = x.shape
-    
-    x = tf.reshape(x, x_shape)
     x = tf.expand_dims(x, axis=-1)
     x = tf.repeat(x, 3, axis=-1)
-
-    x_bytes = x.tobytes()
+    x_shape = x.shape
+    x_bytes = x.numpy().tobytes()
+    
     y_bytes = tf.io.serialize_tensor(y).numpy()
     return tf.train.Example(features=tf.train.Features(feature={
         'x_shape': tf.train.Feature(int64_list=tf.train.Int64List(value=x_shape)),
@@ -92,12 +90,13 @@ j = 0
 print('Loading Images')
 for label in os.listdir(data_folder):
     img_directory = f'{data_folder}/{label}/'
-    for img in os.listdir(img_directory):
+    for img in os.listdir(img_directory): 
         if j % 100 == 0:
             print('Loading Image #', j)
         X[j] = process_img(img_directory + '/' + img, resize_h, resize_w, resize_d)
         Y[j] = int(label)
         j += 1
+        
     
 
 x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.3)
