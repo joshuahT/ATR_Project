@@ -10,3 +10,6 @@ We designed our 3D CNN architecture to capture the spatiotemporal features of th
 To evaluate the performance of our system, we used metrics such as testing accuracy accuracy, precision, recall. We also compared our results with other state-of-the-art algorithms for target recognition. Our experiments showed that the 3D CNN and SVM algorithms were indeed viable options for target recognition in 3D images. The highest testing accuracy being 92% for 3D CNN model and 85% for our SVM.
 
 In conclusion, we developed an efficient target recognition system using 3D CNN and SVM algorithms. Our system demonstrated high accuracy and outperformed other state-of-the-art algorithms in target recognition. Our system has the potential to be used in various security and surveillance applications, including border control, airport security, and military surveillance.
+
+
+Conference Paper: https://docs.google.com/document/d/1yiskczlku2ky9L5zSWceyGq46t8FFos3NFFBgXQHClk/edit?usp=sharing
